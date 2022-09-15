@@ -13,6 +13,7 @@
     "lint": "eslint --ext ts src"
   },
   "author": "David Gichev <david.gichev@tenforce.com>",
+  "repository": "david-gichev-tf/import-sort-style-tenforce",
   "license": "ISC",
   "files": [
     "lib"
