@@ -1,6 +1,6 @@
 {
   "name": "import-sort-style-tenforce",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Tenforce's import-sort style",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -36,7 +36,6 @@
     "typescript": "^3.2.4"
   },
   "dependencies": {
-    "import-sort-parser": "^6.0.0",
-    "vscode": "^1.1.37"
+    "import-sort-parser": "^6.0.0"
   }
 }

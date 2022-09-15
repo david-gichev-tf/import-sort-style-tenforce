@@ -3,35 +3,34 @@ import * as path from "path";
 
 import { IImport } from "import-sort-parser";
 import {IStyleAPI, IStyleItem} from "import-sort-style";
-import * as vscode from 'vscode';
 
-const expectedFileExtensions = [".ts", ".tsx", ".js", ".css", ".scss"]
+const expectedFileExtensions = ["", ".ts", ".tsx", ".js", ".css", ".scss"]
 
-function getCurrentDirectoryPath(): string | null {
-  const workingDirectory = vscode.window.activeTextEditor?.document.uri.fsPath
+function getCurrentDirectoryPath(file: string): string | null {
+  return path.dirname(file)
+}
+
+function getImportedDirectoryPath(file: string, imported: IImport): (string | null) {
+  const workingDirectory = getCurrentDirectoryPath(file)
   if(!workingDirectory) {
     return null
   }
-  return path.dirname(workingDirectory)
-}
-
-function getFileDirectoryPath(imported: IImport): (string | null) {
-  const workingDirectory = getCurrentDirectoryPath()
-  if(!workingDirectory) {
-    return null
+  const resolved = path.join(workingDirectory, imported.moduleName)
+  if(fs.existsSync(resolved) && fs.lstatSync(resolved).isDirectory()) {
+    return resolved
   }
-  return path.dirname(path.join(workingDirectory, imported.moduleName))
+  return path.dirname(resolved)
 }
 
-function getFileExtension(imported: IImport): (string | null) {
-  const targetDirectoryPath = getFileDirectoryPath(imported)
+function getImportedExtension(file: string, imported: IImport): (string | null) {
+  const targetDirectoryPath = getImportedDirectoryPath(file, imported)
   if(!targetDirectoryPath) {
     return null
   }
   const files = fs.readdirSync(targetDirectoryPath)
   const moduleFileName = path.basename(imported.moduleName)
-  const matches = files.filter((file) => file.startsWith(moduleFileName))
-                       .filter((file) => expectedFileExtensions.includes(file.replace(moduleFileName, "")));
+  const matches = files.filter((match) => match.startsWith(moduleFileName))
+                       .filter((match) => expectedFileExtensions.includes(match.replace(moduleFileName, "")));
 
   if(!matches.length) {
     return null
@@ -66,7 +65,7 @@ export default function(styleApi: IStyleAPI, file: string): IStyleItem[] {
   } = styleApi;
 
   function isTSXFile(imported: IImport) {
-    return getFileExtension(imported) === ".tsx"
+    return getImportedExtension(file, imported) === ".tsx"
   }
 
   function isFromTenforce(imported: IImport) {
@@ -74,8 +73,8 @@ export default function(styleApi: IStyleAPI, file: string): IStyleItem[] {
   }
 
   function isWithinPage(imported: IImport) {
-    const importDirs = getFileDirectoryPath(imported)?.split(path.sep).reverse()
-    const currentDirs = getCurrentDirectoryPath()?.split(path.sep).reverse()
+    const importDirs = getImportedDirectoryPath(file, imported)?.split(path.sep).reverse()
+    const currentDirs = getCurrentDirectoryPath(file)?.split(path.sep).reverse()
     if(!importDirs || !currentDirs) {
       return false
     }
@@ -93,28 +92,24 @@ export default function(styleApi: IStyleAPI, file: string): IStyleItem[] {
   }
 
   return [
+    { match: and(hasNoMember, isAbsoluteModule) },
+    { separator: true },
     {
-      match: and(
-          isAbsoluteModule,
-          hasOnlyNamespaceMember,
-          not(isFromTenforce),
-      ),
-      sort: member(unicode),
+        match: and(isAbsoluteModule, hasOnlyNamespaceMember, not(isFromTenforce)),
+        sort: member(unicode),
     },
     {
-      match: and(
-          isAbsoluteModule,
-          hasOnlyDefaultMember,
-          not(isFromTenforce),
-      ),
-      sort: member(unicode),
+        match: and(isAbsoluteModule, hasOnlyDefaultMember, not(isFromTenforce)),
+        sort: member(unicode),
     },
     { match: and(isAbsoluteModule, not(isFromTenforce)), sort: member(unicode) },
     { separator: true },
-    { match: isFromTenforce, sort: member(unicode) },
+    { match: and(not(hasNoMember), isFromTenforce), sort: member(unicode) },
     { separator: true },
+    { match: and(hasNoMember, isRelativeModule, not(isTSXFile), not(isWithinPage)) },
     { match: and(isRelativeModule, not(isTSXFile), not(isWithinPage)), sort: member(unicode) },
     { separator: true },
+    { match: and(hasNoMember, isRelativeModule, not(isTSXFile)) },
     { match: and(isRelativeModule, not(isTSXFile)), sort: member(unicode) },
     { separator: true },
     { match: and(isRelativeModule, isTSXFile, not(isWithinPage)), sort: member(unicode) },
