@@ -78,7 +78,7 @@ Options:
 
 <b>Tip</b>: To sort the imports in all .ts/.tsx files in your project run:
 
-> `(npx) import-sort-cli --write ./**/**/*.ts{,x}`
+> `(npx) import-sort-cli --write "./**/*.ts{,x}"`
 
 <br>
 
