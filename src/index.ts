@@ -78,7 +78,7 @@ export default function(styleApi: IStyleAPI, file: string): IStyleItem[] {
     if(!importDirs || !currentDirs) {
       return false
     }
-    while(true) {
+    while(importDirs.length && currentDirs.length) {
       const dirImport = importDirs.pop()
       const dirCurrent = currentDirs.pop()
       if(dirImport === dirCurrent) {
@@ -89,6 +89,7 @@ export default function(styleApi: IStyleAPI, file: string): IStyleItem[] {
       }
       return false
     }
+    return false
   }
 
   return [
